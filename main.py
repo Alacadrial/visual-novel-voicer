@@ -93,8 +93,11 @@ async def main():
 	speakers = await controller.get_speakers()
 	speaker_uuids = list(speakers.keys())
 
+	main_window_width = 370
+	main_window_height = 550
+
 	dpg.create_context()
-	dpg.create_viewport(title='VNV', width=350, height=510, resizable=False)
+	dpg.create_viewport(title='VNV', width=main_window_width, height=main_window_height, resizable=False)
 	
 	# registery will be done in loop then when we create window we will do another loop to create components.
 	texture_list = list()
@@ -131,7 +134,7 @@ async def main():
 	capture_thread.start()
 
 	#Primary Window, There will be two tabs under this later.
-	with dpg.window(label="Primary Window", no_resize=True, max_size=[350, 400]) as primary_window:
+	with dpg.window(label="Primary Window", no_resize=True, max_size=[main_window_width, 400]) as primary_window:
 		primary_window_id = primary_window
 		with dpg.menu_bar():
 			with dpg.menu(label="Profile"):
@@ -145,12 +148,14 @@ async def main():
 				# Group Main Div For Speaker Components
 				with dpg.group():
 					icon_width, icon_height = 85, 85
+					left_padding = 9
 					split_list = [texture_list[i:i+3] for i in range(0, len(texture_list), 3)]
 					index = 0
 					# For each 3 texture create a Row
 					for part in split_list:
 						# Row
 						with dpg.group(horizontal=True):
+							dpg.add_spacer(width=left_padding)
 							for texture_id in part:
 								# Component
 								with dpg.group():
@@ -170,13 +175,15 @@ async def main():
 										dpg.add_combo(tag=f"variant_{uuid}", items=combo_items, default_value=combo_items[0], enabled=enabled, no_arrow_button=True, width=icon_width-button_width)
 									dpg.add_button(tag=f"assign_{uuid}", label="Assign Voice", callback=assign_voice, user_data=[controller], width=icon_width)
 									index += 1
+								dpg.add_spacer(width=3)
+
 			with dpg.tab(tag="tab_history", label="History"):
 				last_history_entry = 0 # Holds ID of last entry component
 				history_entry_index = 0 # For uuid of a entry to access them from button press.
 				# Text Capture History Will be here, updated dynamically on each render loop.
 				pass
 
-	with dpg.window(label="areaSelect", no_resize=True, no_title_bar=True, no_move=True, min_size=[350,100], pos=[0,400]):
+	with dpg.window(label="areaSelect", no_resize=True, no_title_bar=True, no_move=True, min_size=[main_window_width,150], pos=[0,400]):
 		with dpg.group(horizontal=True):
 			dpg.add_text("Current Name:   ")
 			dpg.add_input_text(label="##", tag="current_name", readonly=True)
