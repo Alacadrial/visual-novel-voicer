@@ -72,7 +72,7 @@ class VnvController:
 
 		self.set_tesseract_path()
 		# zodiac's tesseract model is really good at detecting japanese text.
-		self.lang_pack = 'eng+jpn+jpn_zodiac3539_ver5'
+		self.lang_pack = 'eng+jpn+jpn_ver5'
 
 	async def get_speakers(self):
 		speaker_dict = dict()
