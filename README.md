@@ -2,11 +2,26 @@
 
 The goal behind the creation of this project is to have voice support for visual novels that do not inherently have them. Although the program can do what it is designed to do, this is just a food for thought which still needs to be improved. Which is why I have made this project public so people can create their own variations and better this one.<br>
 
+# screenshots
+
+<table>
+  <tr>
+    <td align="center"><img src="./screenshots/app_1.png" width="350"/></td>
+    <td align="center"><img src="./screenshots/app_2.png" width="590"/></td>
+  </tr>
+  <tr>
+    <td align="center">Speakers Tab</td>
+    <td align="center">History Tab</td>
+  </tr>
+</table>
+
 # requirements
 
 This program requires voicevox engine to be running, you can learn how to setup docker container for that online.<br>
 Docker Image for VoiceVox Engine: https://hub.docker.com/r/voicevox/voicevox_engine<br>
 
+Clone the repository using: `git clone https://github.com/Alacadrial/visual-novel-voicer.git` or just download it as a Zip and extract it to somewhere.<br>
+Go to the project's root directory on your terminal.<br>
 Packages used in the program are also provided which you install either globally or in a venv by.<br>
 `pip install -r requirements.txt`<br>
 
@@ -19,12 +34,12 @@ For Linux: `sudo apt install tesseract-ocr -y`<br>
 For Windows: https://digi.bib.uni-mannheim.de/tesseract/<br>
 For People who want to play in Japanese text I recommend downloading "jpn_ver5.traineddata" and placing it into traineddata folder in OCR engine: https://github.com/zodiac3539/jpn_vert<br>
 
-Finally make sure to have Tesseract OCR Engine's path set as a path variable!!!
+Finally make sure to have Tesseract OCR Engine's path set as a path variable!!!<br>
 
 # usage
 
 1. Run the docker container for Voicevox engine on port 50021.<br>
-2. Open up your game, and the application, define regions of text field and character name field.<br>
+2. Open up your game, and run the application, define regions of text field and character name field.<br>
 3. After regions are defined, screen capture will start and those regions will be captured and turn into text.<br>
 4. You can listen sample voices of the trained models by pressing "L" button under them, you can also change variations of their voice using the dropdown next to it.<br>
 5. You can assign a character name to a voice, by "Assign Voice" button in the Speakers tab. "Current Name" textbox points to the current character name on the screen which will be assigned on your button press. This makes it so that whenever we want to synthesise audio from a text that is assigned to that character, we will hear that assigned voice.<br>
@@ -34,6 +49,11 @@ Finally make sure to have Tesseract OCR Engine's path set as a path variable!!!
 
 - You can use the "History" tab to see previous captures, and play voice for them using the button next to it.<br>
 - Lastly on Windows and macOS you can use "F9" key to play audio for the last valid query.<br>
+
+# some problems
+
+For people on Windows that is using WSL2.0 to set up their docker. After you are done with using the application make sure to shutdown wsl to free your memory as it occupies a lot of memory to run.<br>
+Open powershell and enter command: `wsl --shutdown` to free your memory.<br>
 
 # credits
 
