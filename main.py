@@ -4,6 +4,8 @@ import threading as th
 import dearpygui.dearpygui as dpg
 from PIL import Image
 import platform
+import psutil
+import os
 
 
 def task_thread(coro, loop):
@@ -11,8 +13,31 @@ def task_thread(coro, loop):
 	future = asyncio.run_coroutine_threadsafe(coro, loop)
 	loop.run_forever()
 
+def prompt_process_selector(sender, app_data, user_data):
+
+	def select_callback(sender, app_data, user_data):
+		controller, combo = user_data
+		pid = int(dpg.get_value(combo).split(":")[-1])
+		controller.set_target_process(pid)
+		dpg.delete_item("process_window")
+
+	controller = user_data[0]
+	try:
+		user = os.getlogin()
+		print("Processes for user: ", os.getlogin())
+		with dpg.window(label="Select Game Process", tag="process_window", pos=[0,0], min_size=[300,150], no_resize=True, on_close=lambda: dpg.remove_alias("process_window")) as window:
+			process_list = sorted(psutil.process_iter(attrs=['pid', 'name', 'username']), key=lambda p: p.info['name'].lower())
+			combo_list = [f"{process.name()}:{process.pid}" for process in process_list if process.info['username'] == user]
+			with dpg.group(horizontal=True):
+				dpg.add_text("Process: ")
+				combo = dpg.add_combo(items=combo_list, default_value=combo_list[0], width=150)
+				dpg.add_button(label="Select", callback=select_callback, user_data=[controller, combo])
+
+	except Exception as err:
+		print(err)
+
 def prompt_about(sender, app_data, user_data):
-	window_id = user_data[0]
+	parent_window = user_data[0]
 	try:
 		with dpg.window(label="About", tag="about_window", pos=[0, 0], min_size=[350,200], on_close=lambda: dpg.remove_alias("about_window")) as window:
 			dpg.add_text("Thank you for trying my application.")
@@ -22,7 +47,6 @@ def prompt_about(sender, app_data, user_data):
 				dpg.add_input_text(label="##", default_value="https://github.com/Alacadrial/visual-novel-voicer",readonly=True)
 	except Exception as err:
 		print(err)
-		pass
 
 def prompt_file_selector(sender, app_data, user_data):
 	label, callback, controller = user_data 
@@ -137,6 +161,7 @@ async def main():
 	with dpg.window(label="Primary Window", no_resize=True, max_size=[main_window_width, 400]) as primary_window:
 		primary_window_id = primary_window
 		with dpg.menu_bar():
+			dpg.add_menu_item(label="Attach Process", callback=prompt_process_selector, user_data=[controller])
 			with dpg.menu(label="Profile"):
 				dpg.add_menu_item(label="Load", callback=prompt_file_selector, user_data=["Load Profile File", load_profile, controller])
 				# dpg.add_menu_item(label="Save")
@@ -213,6 +238,7 @@ async def main():
 		# Show Error
 		if controller.error:
 			dpg.set_value("log_text", f"error: {controller.error}")
+			controller.error = None
 
 		# Insert to History Tab
 		if controller.history:

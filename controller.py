@@ -14,8 +14,14 @@ import base64
 import pickle
 from translate import Translator
 import os
-import shutil
+import platform
+import psutil
+import subprocess
 
+# OS specific imports
+if platform.system() == "Windows":
+	import win32gui
+	import win32process
 
 class ROI:
 
@@ -52,9 +58,13 @@ class VnvController:
 		self.client = Client()
 		self.translator = Translator(to_lang="ja")
 		self.roi = ROI()
+		self.platform = platform.system()
+
 		self.screenshot = None
 		self.text_roi = None    
 		self.name_roi = None
+		self.target_process = None # target process id
+		
 		self.last_valid_query = None  # (id, text), this will play when we press play hotkey
 		self.voice_dict = dict()
 		self.audio_cache = dict()
@@ -70,9 +80,10 @@ class VnvController:
 		self.play_object = None
 		self.audio_tasks = list()
 
+		self.get_focused_process_id = self.process_id_grabber_function()
 		self.set_tesseract_path()
 		# zodiac's tesseract model is really good at detecting japanese text.
-		self.lang_pack = 'eng+jpn+jpn_ver5'
+		self.lang_pack = 'eng+jpn+jpn_ver5' # later on add multi file selection and save this in profiles as well
 
 	async def get_speakers(self):
 		speaker_dict = dict()
@@ -93,9 +104,19 @@ class VnvController:
 	async def close(self):
 		await self.client.close()
 
+	def process_id_grabber_function(self):
+		if self.platform == "Windows":
+			import win32gui
+			import win32process
+			return lambda: int(win32process.GetWindowThreadProcessId(win32gui.GetForegroundWindow())[1])
+		elif self.platform == "Linux":
+			return lambda: int(subprocess.check_output(['xdotool', 'getwindowfocus', 'getwindowpid']).decode().strip())
+		elif self.platform == "Darwin":
+			return lambda: int(subprocess.check_output(['osascript', '-e', 'tell application "System Events" to get the unix id of the process whose frontmost is true']).decode().strip())
+
 	def set_tesseract_path(self):
 		tesseract_cmd = 'tesseract'
-		if os.name == 'nt':  # Windows
+		if platform.system() == 'Windows':
 			tesseract_cmd = 'tesseract.exe'
 
 		# Search for tesseract in the system path
@@ -112,6 +133,7 @@ class VnvController:
 				exit(-1)
 
 	def save_profile(self, path):
+		print("Save profile called with path: ", path)
 		profile = {
 			"name_roi" : self.name_roi,
 			"text_roi" : self.text_roi,
@@ -119,12 +141,11 @@ class VnvController:
 			"auto_play" : self.auto_play,
 			"translate" : self.translate
 		}
-		print("Saving Profile: ")
 		with open(path, "wb") as file:
 			pickle.dump(profile, file)
 
 	def load_profile(self, path):
-		print("Loading Profile: ")
+		print("Load profile called with path: ", path)
 		with open(path, "rb") as file:
 			profile = pickle.load(file)
 		self.name_roi = profile["name_roi"]
@@ -148,12 +169,15 @@ class VnvController:
 	def set_name_roi(self, roi):
 		self.name_roi = roi
 
+	def set_target_process(self, pid):
+		self.target_process = pid
+
 	def select_roi(self):
 		self.roi.listen_mouse()
 		return self.roi.get_roi()
 
 	def preprocess_english(self, text):
-		return text
+		return re.sub(r"[^\w\s\d\.\?,!]+$", "", text).strip()
 
 	def preprocess_japanese(self, text):
 		# Remove spaces
@@ -187,33 +211,42 @@ class VnvController:
 		previous_text = ""
 		found_new_valid_query = False
 
-		print("Waiting text roi to be set.")
-		# Wait for text roi to be set.
-		while True:
-			if self.text_roi == None:
-				await asyncio.sleep(0.5)
-				continue
-			break
-		
-		print("Text roi is set, starting screencapture.")
 		# Capture Loop
 		while True:
 			start = time.time()
 			
-			name = self.get_text_from_roi(self.name_roi).strip()
-			text = self.get_text_from_roi(self.text_roi).strip()
+			# Check focused process id to match with selected process 
+			if not self.target_process:
+				print("Target process is not set. Please set it for capture to work.")
+				await asyncio.sleep(0.25)
+				continue
 
+			# print("Current focused proc id: ", self.get_focused_process_id())
+
+			if self.target_process != self.get_focused_process_id():
+				# print("Window is not focused, skipping Iteration.")
+				await asyncio.sleep(0.1)
+				continue
+
+			name = self.get_text_from_roi(self.name_roi)
 			if not name:
 				name = "Self/Narrator"
-
 			self.current_name = name
+
+			if self.text_roi == None:
+				print("Text field is not set. Please set it for capture to work.")
+				await asyncio.sleep(0.1)
+				continue
+			text = self.get_text_from_roi(self.text_roi)
 			
 			if text == "":
-				print("No text, therefore no query.")
+				# print("No text could be found, therefore no query.")
+				await asyncio.sleep(0.1)
 				continue
 
 			if name not in self.voice_dict:
-				print("Name is not assigned to a voice therefore no query.")
+				print("Text is found, but name is not assigned to a character therefore no query.")
+				await asyncio.sleep(0.1)
 				continue
 
 			speaker = self.voice_dict[name]
@@ -222,6 +255,10 @@ class VnvController:
 				self.last_valid_query = (speaker, text)
 				# First time seeing this valid Query. Therefore initilizing history append and maybe audio play.
 				if not found_new_valid_query:
+					print("--Query--")
+					print(name)
+					print(text)
+					print("---------")
 					self.history = (name, text)
 					found_new_valid_query = True
 					if self.auto_play:

@@ -4,3 +4,6 @@ icon.png
 profiles
 voice.wav
 venv
+dist
+build
+*.spec

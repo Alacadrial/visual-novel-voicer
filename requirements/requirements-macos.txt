@@ -1,0 +1,12 @@
+git+https://github.com/voicevox-client/python@8e140d0
+dearpygui==1.8.0
+keyboard==0.13.5
+numpy==1.24.2
+opencv-python==4.7.0.72
+Pillow==9.4.0
+PyAutoGUI==0.9.53
+pynput==1.7.6
+pytesseract==0.3.10
+simpleaudio==1.0.4
+translate==3.6.1
+psutil==5.9.4
