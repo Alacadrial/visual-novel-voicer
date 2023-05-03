@@ -23,11 +23,11 @@ def prompt_process_selector(sender, app_data, user_data):
 
 	controller = user_data[0]
 	try:
-		user = os.getlogin()
+		user = os.getlogin().lower()
 		print("Processes for user: ", os.getlogin())
 		with dpg.window(label="Select Game Process", tag="process_window", pos=[0,0], min_size=[300,150], no_resize=True, on_close=lambda: dpg.remove_alias("process_window")) as window:
 			process_list = sorted(psutil.process_iter(attrs=['pid', 'name', 'username']), key=lambda p: p.info['name'].lower())
-			combo_list = [f"{process.name()}:{process.pid}" for process in process_list if process.info['username'] == user]
+			combo_list = [f"{process.name()}:{process.pid}" for process in process_list if process.info['username'].lower().contains(user)]
 			with dpg.group(horizontal=True):
 				dpg.add_text("Process: ")
 				combo = dpg.add_combo(items=combo_list, default_value=combo_list[0], width=150)
