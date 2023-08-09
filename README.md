@@ -1,6 +1,7 @@
 # visual-novel-voicer
 
-The goal behind the creation of this project is to have voice support for visual novels that do not inherently have them. Although the program can do what it is designed to do on most cases, this is just a food for thought which still needs to be improved. Which is why I have made this project public so people can create their own variations and upgrades and better this one.<br>
+The goal behind the creation of this project is to have voice support for visual novels that do not inherently have them. Although the program can do what it is designed to do on most cases, this is just a food for thought which still needs to be improved greatly. Which is why I have made this project public so people can create their own variations and upgrades and better this one.<br>
+Whilst making this project I had some encounters which really frustrated me hence reduced the quality of the product, though it is a great idea that can be further improved with people that has the right mind and skills.
 
 # screenshots
 
